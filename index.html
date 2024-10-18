@@ -3,161 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flag Master: World Geography Challenge</title>
+    <title>Continent, Country, Capital, Currency Game</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
+            background-color: #f5f5f5;
             text-align: center;
+            padding: 20px;
         }
         .container {
-            width: 50%;
-            margin: 0 auto;
+            margin-top: 50px;
+            max-width: 600px;
+            margin: auto;
             background-color: white;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
         }
         img {
-            max-width: 100px;
-            margin: 20px;
+            width: 150px;
         }
-        .timer {
-            font-size: 20px;
-            color: red;
-        }
-        .question {
-            font-size: 20px;
-        }
-        .options {
-            margin: 20px 0;
-        }
-        .options button {
-            padding: 10px;
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
             margin: 10px;
             cursor: pointer;
         }
-        .result {
-            font-size: 22px;
-            color: green;
-        }
-        .game-over {
-            font-size: 24px;
+        .timer {
+            font-size: 20px;
             color: red;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Flag Master: World Geography Challenge</h1>
-        <div id="game-container">
-            <img id="flag" src="" alt="Country Flag">
-            <p class="timer">Time left: <span id="time">30</span> seconds</p>
-            <p class="question" id="question"></p>
-            <div class="options" id="options">
-                <!-- Options will go here -->
-            </div>
-            <p class="result" id="result"></p>
-        </div>
-        <div id="game-over" class="game-over"></div>
+<div class="container">
+    <h1>Continent, Country, Capital, Currency Game</h1>
+    <div id="gameSettings">
+        <h3>Select Settings:</h3>
+        <label for="questionSet">Select Question Set:</label>
+        <select id="questionSet">
+            <option value="all">All Questions</option>
+            <option value="continent">Continent Questions</option>
+            <option value="country">Country Questions</option>
+            <option value="capital">Capital Questions</option>
+            <option value="currency">Currency Questions</option>
+        </select><br><br>
+
+        <label for="questionCount">Number of Questions (Max 500):</label>
+        <input type="number" id="questionCount" value="10" min="1" max="500"><br><br>
+
+        <label for="timeLimit">Time per Question (5 seconds to 60 seconds):</label>
+        <input type="number" id="timeLimit" value="30" min="5" max="60"><br><br>
+
         <button onclick="startGame()">Start Game</button>
     </div>
 
-    <script>
-        let currentQuestionIndex = 0;
-        let timeLeft = 30;
-        let timer;
-        let score = 0;
+    <div id="game" style="display: none;">
+        <div class="timer" id="timer"></div>
+        <div id="question"></div>
+        <img id="flag" alt="Country Flag"><br><br>
+        <div id="options"></div>
+        <p id="feedback"></p>
+    </div>
 
-        const countries = [
-            {
-                flag: 'https://upload.wikimedia.org/wikipedia/commons/7/77/Flag_of_Algeria.svg',
-                country: 'Algeria',
-                capital: 'Algiers',
-                currency: 'Dinar',
-                continent: 'Africa',
-                options: ['Algeria', 'Angola', 'Benin', 'Botswana']
-            },
-            {
-                flag: 'https://upload.wikimedia.org/wikipedia/commons/9/9d/Flag_of_Angola.svg',
-                country: 'Angola',
-                capital: 'Luanda',
-                currency: 'New Kwanza',
-                continent: 'Africa',
-                options: ['Angola', 'Algeria', 'Benin', 'Botswana']
-            },
-            {
-                flag: 'https://upload.wikimedia.org/wikipedia/commons/0/0a/Flag_of_Benin.svg',
-                country: 'Benin',
-                capital: 'Porto-Novo',
-                currency: 'CFA Franc',
-                continent: 'Africa',
-                options: ['Botswana', 'Benin', 'Angola', 'Algeria']
-            },
-            // Add more countries as needed
-        ];
+    <div id="results" style="display: none;">
+        <h3>Quiz Results</h3>
+        <p id="attempts"></p>
+        <p id="correct"></p>
+        <p id="incorrect"></p>
+        <p id="score"></p>
+    </div>
+</div>
 
-        function startGame() {
-            currentQuestionIndex = 0;
-            score = 0;
-            document.getElementById("game-over").innerHTML = "";
-            startTimer();
-            displayQuestion();
+<script>
+    const countries = [
+        {
+            flag: 'https://upload.wikimedia.org/wikipedia/commons/7/77/Flag_of_Algeria.svg',
+            country: 'Algeria',
+            continent: 'Africa',
+            capital: 'Algiers',
+            currency: 'Algerian dinar'
+        },
+        {
+            flag: 'https://upload.wikimedia.org/wikipedia/commons/9/9d/Flag_of_Angola.svg',
+            country: 'Angola',
+            continent: 'Africa',
+            capital: 'Luanda',
+            currency: 'Angolan kwanza'
+        },
+        // Add more countries here as needed
+    ];
+
+    let currentQuestionIndex = 0;
+    let selectedQuestions = [];
+    let attempts = 0;
+    let correctAnswers = 0;
+    let incorrectAnswers = 0;
+    let score = 0;
+    let timerInterval;
+    let timeLeft;
+
+    function startGame() {
+        const questionSet = document.getElementById('questionSet').value;
+        const questionCount = parseInt(document.getElementById('questionCount').value);
+        const timeLimit = parseInt(document.getElementById('timeLimit').value);
+        
+        selectedQuestions = getSelectedQuestions(questionSet, questionCount);
+        currentQuestionIndex = 0;
+        attempts = 0;
+        correctAnswers = 0;
+        incorrectAnswers = 0;
+        score = 0;
+        timeLeft = timeLimit;
+
+        document.getElementById('gameSettings').style.display = 'none';
+        document.getElementById('game').style.display = 'block';
+        loadQuestion();
+    }
+
+    function getSelectedQuestions(set, count) {
+        const shuffled = countries.sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, count);
+    }
+
+    function loadQuestion() {
+        if (currentQuestionIndex >= selectedQuestions.length) {
+            endGame();
+            return;
         }
 
-        function startTimer() {
-            timeLeft = 30;
-            timer = setInterval(function () {
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    endGame();
-                } else {
-                    document.getElementById('time').innerHTML = timeLeft;
-                    timeLeft--;
-                }
-            }, 1000);
+        const question = selectedQuestions[currentQuestionIndex];
+        document.getElementById('flag').src = question.flag;
+        generateRandomQuestion(question);
+        startTimer();
+    }
+
+    function generateRandomQuestion(question) {
+        const questionType = Math.floor(Math.random() * 4); // Randomly pick question type
+        let questionText, options;
+
+        switch (questionType) {
+            case 0:
+                questionText = `The flag belongs to which continent?`;
+                options = [question.continent, 'Europe', 'Asia', 'America'];
+                break;
+            case 1:
+                questionText = `This flag belongs to which country?`;
+                options = [question.country, 'France', 'Canada', 'Australia'];
+                break;
+            case 2:
+                questionText = `Choose the capital of the country to which the flag belongs to.`;
+                options = [question.capital, 'Paris', 'London', 'Rome'];
+                break;
+            case 3:
+                questionText = `Choose the currency of the country to which the flag belongs to.`;
+                options = [question.currency, 'Euro', 'US Dollar', 'Yen'];
+                break;
         }
 
-        function displayQuestion() {
-            if (currentQuestionIndex >= countries.length) {
-                endGame();
-                return;
+        document.getElementById('question').innerText = questionText;
+        document.getElementById('options').innerHTML = '';
+
+        options.forEach(option => {
+            const button = document.createElement('button');
+            button.innerText = option;
+            button.onclick = () => checkAnswer(option, question, questionType);
+            document.getElementById('options').appendChild(button);
+        });
+    }
+
+    function startTimer() {
+        timeLeft = parseInt(document.getElementById('timeLimit').value);
+        document.getElementById('timer').innerText = `Time left: ${timeLeft} seconds`;
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer').innerText = `Time left: ${timeLeft} seconds`;
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                showAnswer('Time is up!');
+                score -= 0.25;
+                incorrectAnswers++;
+                nextQuestion();
             }
+        }, 1000);
+    }
 
-            const questionData = countries[currentQuestionIndex];
-            document.getElementById('flag').src = questionData.flag;
-            document.getElementById('question').innerHTML = `Which country does this flag represent?`;
-            document.getElementById('options').innerHTML = '';
+    function checkAnswer(selectedOption, question, questionType) {
+        clearInterval(timerInterval);
+        let correctOption;
 
-            questionData.options.forEach(option => {
-                const button = document.createElement('button');
-                button.innerHTML = option;
-                button.onclick = () => checkAnswer(option);
-                document.getElementById('options').appendChild(button);
-            });
+        switch (questionType) {
+            case 0:
+                correctOption = question.continent;
+                break;
+            case 1:
+                correctOption = question.country;
+                break;
+            case 2:
+                correctOption = question.capital;
+                break;
+            case 3:
+                correctOption = question.currency;
+                break;
         }
 
-        function checkAnswer(selectedOption) {
-            const questionData = countries[currentQuestionIndex];
-            if (selectedOption === questionData.country) {
-                document.getElementById('result').innerHTML = `Correct! Capital: ${questionData.capital}, Currency: ${questionData.currency}, Continent: ${questionData.continent}`;
-                score++;
-            } else {
-                document.getElementById('result').innerHTML = `Wrong! Correct answer: ${questionData.country}. Capital: ${questionData.capital}, Currency: ${questionData.currency}`;
-            }
-            currentQuestionIndex++;
-            setTimeout(() => {
-                document.getElementById('result').innerHTML = '';
-                displayQuestion();
-            }, 2000);
+        if (selectedOption === correctOption) {
+            showAnswer('Correct!');
+            score++;
+            correctAnswers++;
+        } else {
+            showAnswer(`Wrong! The correct answer was ${correctOption}`);
+            score -= 0.25;
+            incorrectAnswers++;
         }
 
-        function endGame() {
-            clearInterval(timer);
-            document.getElementById('game-container').innerHTML = "";
-            document.getElementById('game-over').innerHTML = `Game Over! Your score: ${score}`;
-        }
-    </script>
+        nextQuestion();
+    }
+
+    function showAnswer(message) {
+        document.getElementById('feedback').innerText = message;
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        setTimeout(() => {
+            document.getElementById('feedback').innerText = '';
+            loadQuestion();
+        }, 2000);
+    }
+
+    function endGame() {
+        document.getElementById('game').style.display = 'none';
+        document.getElementById('results').style.display = 'block';
+        document.getElementById('attempts').innerText = `Total attempts: ${selectedQuestions.length}`;
+        document.getElementById('correct').innerText = `Correct answers: ${correctAnswers}`;
+        document.getElementById('incorrect').innerText = `Incorrect answers: ${incorrectAnswers}`;
+        document.getElementById('score').innerText = `Final score: ${score}`;
+    }
+</script>
+
 </body>
 </html>
