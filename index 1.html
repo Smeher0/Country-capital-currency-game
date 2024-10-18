@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Continent, Country, Capital, Currency Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            margin-top: 50px;
+            max-width: 600px;
+            margin: auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        img {
+            width: 150px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        .timer {
+            font-size: 20px;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Continent, Country, Capital, Currency Game</h1>
+    <div id="gameSettings">
+        <h3>Select Settings:</h3>
+        <label for="questionSet">Select Question Set:</label>
+        <select id="questionSet">
+            <option value="all">All Questions</option>
+            <option value="continent">Continent Questions</option>
+            <option value="country">Country Questions</option>
+            <option value="capital">Capital Questions</option>
+            <option value="currency">Currency Questions</option>
+        </select><br><br>
+
+        <label for="questionCount">Number of Questions (Max 500):</label>
+        <input type="number" id="questionCount" value="10" min="1" max="500"><br><br>
+
+        <label for="timeLimit">Time per Question (5 seconds to 60 seconds):</label>
+        <input type="number" id="timeLimit" value="30" min="5" max="60"><br><br>
+
+        <button onclick="startGame()">Start Game</button>
+    </div>
+
+    <div id="game" style="display: none;">
+        <div class="timer" id="timer"></div>
+        <div id="question"></div>
+        <img id="flag" alt="Country Flag"><br><br>
+        <div id="options"></div>
+        <p id="feedback"></p>
+    </div>
+
+    <div id="results" style="display: none;">
+        <h3>Quiz Results</h3>
+        <p id="attempts"></p>
+        <p id="correct"></p>
+        <p id="incorrect"></p>
+        <p id="score"></p>
+    </div>
+</div>
+
+<script>
+    const countries = [
+        {
+            flag: 'https://upload.wikimedia.org/wikipedia/commons/7/77/Flag_of_Algeria.svg',
+            country: 'Algeria',
+            continent: 'Africa',
+            capital: 'Algiers',
+            currency: 'Algerian dinar'
+        },
+        {
+            flag: 'https://upload.wikimedia.org/wikipedia/commons/9/9d/Flag_of_Angola.svg',
+            country: 'Angola',
+            continent: 'Africa',
+            capital: 'Luanda',
+            currency: 'Angolan kwanza'
+        },
+        // Add more countries here as needed
+    ];
+
+    let currentQuestionIndex = 0;
+    let selectedQuestions = [];
+    let attempts = 0;
+    let correctAnswers = 0;
+    let incorrectAnswers = 0;
+    let score = 0;
+    let timerInterval;
+    let timeLeft;
+
+    function startGame() {
+        const questionSet = document.getElementById('questionSet').value;
+        const questionCount = parseInt(document.getElementById('questionCount').value);
+        const timeLimit = parseInt(document.getElementById('timeLimit').value);
+        
+        selectedQuestions = getSelectedQuestions(questionSet, questionCount);
+        currentQuestionIndex = 0;
+        attempts = 0;
+        correctAnswers = 0;
+        incorrectAnswers = 0;
+        score = 0;
+        timeLeft = timeLimit;
+
+        document.getElementById('gameSettings').style.display = 'none';
+        document.getElementById('game').style.display = 'block';
+        loadQuestion();
+    }
+
+    function getSelectedQuestions(set, count) {
+        const shuffled = countries.sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, count);
+    }
+
+    function loadQuestion() {
+        if (currentQuestionIndex >= selectedQuestions.length) {
+            endGame();
+            return;
+        }
+
+        const question = selectedQuestions[currentQuestionIndex];
+        document.getElementById('flag').src = question.flag;
+        generateRandomQuestion(question);
+        startTimer();
+    }
+
+    function generateRandomQuestion(question) {
+        const questionType = Math.floor(Math.random() * 4); // Randomly pick question type
+        let questionText, options;
+
+        switch (questionType) {
+            case 0:
+                questionText = `The flag belongs to which continent?`;
+                options = [question.continent, 'Europe', 'Asia', 'America'];
+                break;
+            case 1:
+                questionText = `This flag belongs to which country?`;
+                options = [question.country, 'France', 'Canada', 'Australia'];
+                break;
+            case 2:
+                questionText = `Choose the capital of the country to which the flag belongs to.`;
+                options = [question.capital, 'Paris', 'London', 'Rome'];
+                break;
+            case 3:
+                questionText = `Choose the currency of the country to which the flag belongs to.`;
+                options = [question.currency, 'Euro', 'US Dollar', 'Yen'];
+                break;
+        }
+
+        document.getElementById('question').innerText = questionText;
+        document.getElementById('options').innerHTML = '';
+
+        options.forEach(option => {
+            const button = document.createElement('button');
+            button.innerText = option;
+            button.onclick = () => checkAnswer(option, question, questionType);
+            document.getElementById('options').appendChild(button);
+        });
+    }
+
+    function startTimer() {
+        timeLeft = parseInt(document.getElementById('timeLimit').value);
+        document.getElementById('timer').innerText = `Time left: ${timeLeft} seconds`;
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer').innerText = `Time left: ${timeLeft} seconds`;
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                showAnswer('Time is up!');
+                score -= 0.25;
+                incorrectAnswers++;
+                nextQuestion();
+            }
+        }, 1000);
+    }
+
+    function checkAnswer(selectedOption, question, questionType) {
+        clearInterval(timerInterval);
+        let correctOption;
+
+        switch (questionType) {
+            case 0:
+                correctOption = question.continent;
+                break;
+            case 1:
+                correctOption = question.country;
+                break;
+            case 2:
+                correctOption = question.capital;
+                break;
+            case 3:
+                correctOption = question.currency;
+                break;
+        }
+
+        if (selectedOption === correctOption) {
+            showAnswer('Correct!');
+            score++;
+            correctAnswers++;
+        } else {
+            showAnswer(`Wrong! The correct answer was ${correctOption}`);
+            score -= 0.25;
+            incorrectAnswers++;
+        }
+
+        nextQuestion();
+    }
+
+    function showAnswer(message) {
+        document.getElementById('feedback').innerText = message;
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        setTimeout(() => {
+            document.getElementById('feedback').innerText = '';
+            loadQuestion();
+        }, 2000);
+    }
+
+    function endGame() {
+        document.getElementById('game').style.display = 'none';
+        document.getElementById('results').style.display = 'block';
+        document.getElementById('attempts').innerText = `Total attempts: ${selectedQuestions.length}`;
+        document.getElementById('correct').innerText = `Correct answers: ${correctAnswers}`;
+        document.getElementById('incorrect').innerText = `Incorrect answers: ${incorrectAnswers}`;
+        document.getElementById('score').innerText = `Final score: ${score}`;
+    }
+</script>
+
+</body>
+</html>
