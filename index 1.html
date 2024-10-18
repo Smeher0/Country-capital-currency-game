@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Continent, Country, Capital, Currency Game</title>
+    <title>Global Country Quiz</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,21 +41,9 @@
 <body>
 
 <div class="container">
-    <h1>Continent, Country, Capital, Currency Game</h1>
+    <h1>Global Country Quiz - 100 Questions</h1>
     <div id="gameSettings">
         <h3>Select Settings:</h3>
-        <label for="questionSet">Select Question Set:</label>
-        <select id="questionSet">
-            <option value="all">All Questions</option>
-            <option value="continent">Continent Questions</option>
-            <option value="country">Country Questions</option>
-            <option value="capital">Capital Questions</option>
-            <option value="currency">Currency Questions</option>
-        </select><br><br>
-
-        <label for="questionCount">Number of Questions (Max 500):</label>
-        <input type="number" id="questionCount" value="10" min="1" max="500"><br><br>
-
         <label for="timeLimit">Time per Question (5 seconds to 60 seconds):</label>
         <input type="number" id="timeLimit" value="30" min="5" max="60"><br><br>
 
@@ -95,7 +83,49 @@
             capital: 'Luanda',
             currency: 'Angolan kwanza'
         },
-        // Add more countries here as needed
+        {
+            flag: 'https://upload.wikimedia.org/wikipedia/commons/a/ae/Flag_of_France.svg',
+            country: 'France',
+            continent: 'Europe',
+            capital: 'Paris',
+            currency: 'Euro'
+        },
+        {
+            flag: 'https://upload.wikimedia.org/wikipedia/commons/4/41/Flag_of_India.svg',
+            country: 'India',
+            continent: 'Asia',
+            capital: 'New Delhi',
+            currency: 'Indian rupee'
+        },
+        {
+            flag: 'https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg',
+            country: 'United States',
+            continent: 'North America',
+            capital: 'Washington D.C.',
+            currency: 'US Dollar'
+        },
+        {
+            flag: 'https://upload.wikimedia.org/wikipedia/commons/9/9a/Flag_of_Germany.svg',
+            country: 'Germany',
+            continent: 'Europe',
+            capital: 'Berlin',
+            currency: 'Euro'
+        },
+        {
+            flag: 'https://upload.wikimedia.org/wikipedia/commons/0/01/Flag_of_Japan.svg',
+            country: 'Japan',
+            continent: 'Asia',
+            capital: 'Tokyo',
+            currency: 'Yen'
+        },
+        {
+            flag: 'https://upload.wikimedia.org/wikipedia/commons/c/cf/Flag_of_Brazil.svg',
+            country: 'Brazil',
+            continent: 'South America',
+            capital: 'Brasilia',
+            currency: 'Brazilian real'
+        },
+        // Add more countries here up to 100 or more
     ];
 
     let currentQuestionIndex = 0;
@@ -108,26 +138,16 @@
     let timeLeft;
 
     function startGame() {
-        const questionSet = document.getElementById('questionSet').value;
-        const questionCount = parseInt(document.getElementById('questionCount').value);
-        const timeLimit = parseInt(document.getElementById('timeLimit').value);
-        
-        selectedQuestions = getSelectedQuestions(questionSet, questionCount);
+        selectedQuestions = countries.sort(() => 0.5 - Math.random()).slice(0, 100);
         currentQuestionIndex = 0;
         attempts = 0;
         correctAnswers = 0;
         incorrectAnswers = 0;
         score = 0;
-        timeLeft = timeLimit;
 
         document.getElementById('gameSettings').style.display = 'none';
         document.getElementById('game').style.display = 'block';
         loadQuestion();
-    }
-
-    function getSelectedQuestions(set, count) {
-        const shuffled = countries.sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, count);
     }
 
     function loadQuestion() {
@@ -149,19 +169,19 @@
         switch (questionType) {
             case 0:
                 questionText = `The flag belongs to which continent?`;
-                options = [question.continent, 'Europe', 'Asia', 'America'];
+                options = [question.continent, 'Europe', 'Asia', 'America', 'Africa'];
                 break;
             case 1:
                 questionText = `This flag belongs to which country?`;
-                options = [question.country, 'France', 'Canada', 'Australia'];
+                options = [question.country, 'France', 'India', 'Brazil', 'United States'];
                 break;
             case 2:
                 questionText = `Choose the capital of the country to which the flag belongs to.`;
-                options = [question.capital, 'Paris', 'London', 'Rome'];
+                options = [question.capital, 'Paris', 'Tokyo', 'Berlin', 'New Delhi'];
                 break;
             case 3:
                 questionText = `Choose the currency of the country to which the flag belongs to.`;
-                options = [question.currency, 'Euro', 'US Dollar', 'Yen'];
+                options = [question.currency, 'Euro', 'Yen', 'US Dollar', 'Brazilian real'];
                 break;
         }
 
